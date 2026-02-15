@@ -25,6 +25,14 @@ const visualizerId = () => {
   // Currently displayed image (may be source OR generated)
   const [currentImage, setCurrentImage] = useState<string | null>(null);
 
+  const SectionLoader = ({ text = "Loading..." }: { text?: string }) => (
+    <div className="flex items-center justify-center w-full h-40">
+      <div className="flex items-center gap-2 text-gray-500 font-medium">
+        <RefreshCcw className="w-4 h-4 animate-spin" />
+        {text}
+      </div>
+    </div>
+  );
 
   const handleBack = () => navigate("/");
 
@@ -200,7 +208,9 @@ const visualizerId = () => {
           </div>
 
           <div className={`render-area ${isProcessing ? "is-processing" : ""}`}>
-            {currentImage ? (
+            {isProjectLoading ? (
+              <SectionLoader text="Loading project..." />
+            ) : currentImage ? (
               <img src={currentImage} alt="AI Rendered View" className="render-img" />
             ) : (
               <div className="render-placeholder">
@@ -235,7 +245,9 @@ const visualizerId = () => {
           </div>
 
           <div className="compare-stage">
-            {project?.sourceImage && currentImage ? (
+            {isProjectLoading ? (
+              <SectionLoader text="Loading comparison..." />
+            ) : project?.sourceImage && currentImage ? (
               <ReactCompareSlider
                 defaultValue={50}
                 style={{ width: "100%", height: "auto" }}

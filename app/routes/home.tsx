@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useOutletContext } from "react-router";
 import { ArrowRight, ArrowUpRight, Clock, Layers, RefreshCcw } from "lucide-react";
 
 import Navbar from "components/Navbar";
@@ -21,6 +21,7 @@ export function meta({ }: Route.MetaArgs) {
 
 export default function Home() {
   const navigate = useNavigate();
+  const { isSignedIn, userName } = useOutletContext<AuthContext>();
 
   // Stores all user projects
   const [projects, setProjects] = useState<DesignItem[]>([]);
@@ -74,17 +75,27 @@ export default function Home() {
   // Fetch projects on first load
   useEffect(() => {
     const fetchProjects = async () => {
-      const items = await getProjects();
-      setProjects(items.slice().reverse());
+      if (!isSignedIn) {
+        setProjects([]);
+        return;
+      }
+
+      setIsProjectsLoading(true);
+
+      try {
+        const items = await getProjects();
+        setProjects(items.slice().reverse());
+      } catch (e) {
+        console.error("Failed to fetch projects:", e);
+        setProjects([]);
+      } finally {
+        setIsProjectsLoading(false);
+      }
     };
 
-    try {
-      setIsProjectsLoading(true);
-      fetchProjects();
-    } finally {
-      setIsProjectsLoading(false);
-    }
-  }, []);
+    fetchProjects();
+  }, [isSignedIn]);
+
 
   return (
     <div className="home">
@@ -185,7 +196,7 @@ export default function Home() {
                       <div className="meta">
                         <Clock size={12} />
                         <span>{new Date(timestamp).toLocaleDateString()}</span>
-                        <span>By You</span>
+                        <span>By {userName}</span>
                       </div>
                     </div>
 

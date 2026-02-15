@@ -5,14 +5,13 @@ import Button from "./ui/Button";
 
 const Navbar = () => {
     // Auth state & actions provided from root Outlet context
-    const { isSignedIn, userName, signIn, signOut } = useOutletContext<AuthContext>();
+    const { isSignedIn, userName, signIn, signOut, refreshAuth } = useOutletContext<AuthContext>();
 
     // Single handler toggles between login & logout
     const handleAuthClick = async () => {
         if (isSignedIn) {
             try {
                 await signOut();
-                window.location.reload(); // Reload after logout
             } catch (error) {
                 console.error(`Puter Sign Out failed: ${error}`);
             }
@@ -21,10 +20,11 @@ const Navbar = () => {
 
         try {
             await signIn();
-            window.location.reload(); // Reload after login/signup
         } catch (error) {
             console.error(`Puter Sign In failed: ${error}`);
         }
+
+        await refreshAuth();
     };
 
     return (
