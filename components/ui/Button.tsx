@@ -1,11 +1,3 @@
-import { type ButtonHTMLAttributes } from 'react';
-
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'outline';
-  size?: 'sm' | 'md' | 'lg';
-  fullWidth?: boolean;
-}
-
 const Button = ({
   variant = 'primary',
   size = 'md',
