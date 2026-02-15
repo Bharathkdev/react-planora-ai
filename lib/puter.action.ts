@@ -18,7 +18,7 @@ export const getCurrentUser = async () => {
 
 export const createProject = async ({ item, visibility = "private" }: CreateProjectParams): Promise<DesignItem | null | undefined> => {
     if (!PUTER_WORKER_URL) {
-        console.warn("PUTER_WORKER_URL is not defined. Cannot fetch projects.");
+        console.warn("PUTER_WORKER_URL is not defined. Cannot save the project.");
         return null;
     }
 
