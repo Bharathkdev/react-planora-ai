@@ -1,30 +1,49 @@
 import Button from "components/ui/Button";
 import { generate3DView } from "lib/ai.action";
+import { createProject, getProjectById } from "lib/puter.action";
 import { Box, Download, RefreshCcw, Share2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useNavigate, useOutletContext, useParams } from "react-router";
 
 const visualizerId = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
-  const { initialImage, initialRender, name } = location.state || {};
+  const { userId } = useOutletContext<AuthContext>();
 
   const hasInitialGenerated = useRef(false);
 
+  const [project, setProject] = useState<DesignItem | null>(null);
+  const [isProjectLoading, setIsProjectLoading] = useState<boolean>(true);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [currentImage, setCurrentImage] = useState<string | null>(initialRender || null);
+  const [currentImage, setCurrentImage] = useState<string | null>(null);
 
   const handleBack = () => navigate("/");
 
-  const runGeneration = async () => {
-    if (!initialImage) return;
+  const runGeneration = async (item: DesignItem) => {
+    if (!id || !item.sourceImage) return;
 
     try {
       setIsProcessing(true);
-      const result = await generate3DView({ sourceImage: initialImage });
+      const result = await generate3DView({ sourceImage: item.sourceImage });
 
       if (result?.renderedImage) {
         setCurrentImage(result.renderedImage);
+
+        const updatedProject = {
+          ...item,
+          renderedImage: result.renderedImage,
+          renderedPath: result.renderedPath,
+          timestamp: Date.now(),
+          ownerId: item.ownerId ?? userId ?? null,
+          isPublic: item.isPublic ?? false,
+        };
+
+        const savedProject = await createProject({ item: updatedProject, visibility: "private" });
+
+        if (savedProject) {
+          setProject(savedProject);
+          setCurrentImage(savedProject.renderedImage || result.renderedImage);
+        }
       }
     } catch (error) {
       console.error("Error during generation:", error);
@@ -34,17 +53,50 @@ const visualizerId = () => {
   };
 
   useEffect(() => {
-    if (!initialImage || hasInitialGenerated.current) return;
+    let isMounted = true;
 
-    if (initialRender) {
-      setCurrentImage(initialRender);
+    const loadProject = async () => {
+      if (!id) {
+        setIsProjectLoading(false);
+        return;
+      }
+
+      setIsProjectLoading(true);
+
+      const fetchedProject = await getProjectById({ id });
+
+      if (!isMounted) return;
+
+      setProject(fetchedProject);
+      setCurrentImage(fetchedProject?.renderedImage || null);
+      setIsProjectLoading(false);
+      hasInitialGenerated.current = false;
+    };
+
+    loadProject();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    if (
+      isProjectLoading ||
+      hasInitialGenerated.current ||
+      !project?.sourceImage
+    )
+      return;
+
+    if (project.renderedImage) {
+      setCurrentImage(project.renderedImage);
       hasInitialGenerated.current = true;
       return;
     }
 
     hasInitialGenerated.current = true;
-    runGeneration();
-  }, [initialImage, initialRender]);
+    void runGeneration(project);
+  }, [project, isProjectLoading]);
 
   return (
     <div className="visualizer">
@@ -66,14 +118,14 @@ const visualizerId = () => {
           <div className="panel-header">
             <div className="panel-meta">
               <p>Project</p>
-              <h2>{'Untitled Project'}</h2>
+              <h2>{project?.name || `Project ${id}`}</h2>
               <p className="note">Created by You</p>
             </div>
 
             <div className="panel-actions">
               <Button
                 size="sm"
-                onClick={() => {}}
+                onClick={() => { }}
                 className="export"
                 disabled={!currentImage}
               >
@@ -82,7 +134,7 @@ const visualizerId = () => {
               </Button>
               <Button
                 size="sm"
-                onClick={() => {}}
+                onClick={() => { }}
                 className="share"
               >
                 <Share2 className="w-4 h-4 mr-2" />
@@ -96,8 +148,8 @@ const visualizerId = () => {
               <img src={currentImage} alt="AI Rendered View" className="render-img" />
             ) : (
               <div className="render-placeholder">
-                {initialImage && (
-                  <img src={initialImage} alt="Initial Floor Plan" className="render-fallback" />
+                {project?.sourceImage && (
+                  <img src={project.sourceImage} alt="Initial Floor Plan" className="render-fallback" />
                 )}
               </div>
             )}
