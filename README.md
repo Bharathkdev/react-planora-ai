@@ -3,6 +3,11 @@
   <p>Transform 2D floor plans into photorealistic 3D renders using Generative AI</p>
 </div>
 
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/0f8f89da-097e-46a7-aa68-27938abb2def" width="48%" />
+  <img src="https://github.com/user-attachments/assets/f6b305ca-a3ec-4209-84d4-32dcd3b8945c" width="48%" />
+</div>
+
 ---
 
 ## 📋 Table of Contents
