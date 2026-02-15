@@ -1,25 +1,35 @@
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useOutletContext, useParams } from "react-router";
+import { Box, Download, RefreshCcw, Share2, X } from "lucide-react";
+import { ReactCompareSlider, ReactCompareSliderImage } from "react-compare-slider";
+
 import Button from "components/ui/Button";
 import { generate3DView } from "lib/ai.action";
 import { createProject, getProjectById } from "lib/puter.action";
-import { Box, Download, RefreshCcw, Share2, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { ReactCompareSlider, ReactCompareSliderImage } from "react-compare-slider";
-import { useNavigate, useOutletContext, useParams } from "react-router";
 
 const visualizerId = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { userId } = useOutletContext<AuthContext>();
 
+  // Prevents AI generation from running multiple times due to re-renders
   const hasInitialGenerated = useRef(false);
 
+  // Project data
   const [project, setProject] = useState<DesignItem | null>(null);
   const [isProjectLoading, setIsProjectLoading] = useState<boolean>(true);
+
+  // Rendering state (AI processing)
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+
+  // Currently displayed image (may be source OR generated)
   const [currentImage, setCurrentImage] = useState<string | null>(null);
+
 
   const handleBack = () => navigate("/");
 
+  // Downloads hosted image by converting remote URL -> blob -> local download
+  // Needed because browsers ignore <a download> for cross-origin URLs
   const handleExport = async () => {
     if (!currentImage) return;
 
@@ -43,14 +53,26 @@ const visualizerId = () => {
     }
   };
 
+  /**
+   * Runs AI rendering flow
+   * 1. Send source image to AI
+   * 2. Receive generated render
+   * 3. Persist render to backend
+   * 4. Update UI with saved project
+   *
+   * This ensures refresh persistence — without saving,
+   * generated images would disappear on reload.
+   */
   const runGeneration = async (item: DesignItem) => {
     if (!id || !item.sourceImage) return;
 
     try {
       setIsProcessing(true);
+
       const result = await generate3DView({ sourceImage: item.sourceImage });
 
       if (result?.renderedImage) {
+        // Immediately show preview while saving
         setCurrentImage(result.renderedImage);
 
         const updatedProject = {
@@ -62,8 +84,10 @@ const visualizerId = () => {
           isPublic: item.isPublic ?? false,
         };
 
+        // Persist generated render
         const savedProject = await createProject({ item: updatedProject, visibility: "private" });
 
+        // After save, sync UI with stored version
         if (savedProject) {
           setProject(savedProject);
           setCurrentImage(savedProject.renderedImage || result.renderedImage);
@@ -76,6 +100,10 @@ const visualizerId = () => {
     }
   };
 
+  /**
+   * Load project when visiting visualizer
+   * Handles refresh / deep-link scenario
+   */
   useEffect(() => {
     let isMounted = true;
 
@@ -89,11 +117,14 @@ const visualizerId = () => {
 
       const fetchedProject = await getProjectById({ id });
 
+      // Prevent state update after unmount
       if (!isMounted) return;
 
       setProject(fetchedProject);
       setCurrentImage(fetchedProject?.renderedImage || null);
       setIsProjectLoading(false);
+
+      // Reset generation guard when project changes
       hasInitialGenerated.current = false;
     };
 
@@ -104,6 +135,14 @@ const visualizerId = () => {
     };
   }, [id]);
 
+  /**
+   * Automatic generation trigger
+   *
+   * Rules:
+   * - Do NOT regenerate if already generated
+   * - Do NOT generate while loading
+   * - Generate only when project has source but no render
+   */
   useEffect(() => {
     if (
       isProjectLoading ||
@@ -112,12 +151,14 @@ const visualizerId = () => {
     )
       return;
 
+    // If render exists, just display
     if (project.renderedImage) {
       setCurrentImage(project.renderedImage);
       hasInitialGenerated.current = true;
       return;
     }
 
+    // Otherwise generate once
     hasInitialGenerated.current = true;
     void runGeneration(project);
   }, [project, isProjectLoading]);
@@ -127,7 +168,6 @@ const visualizerId = () => {
       <nav className="topbar">
         <div className="brand">
           <Box className="logo" />
-
           <span className="name">Planora</span>
         </div>
 

@@ -1,17 +1,22 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react'
 import {useOutletContext} from "react-router";
 import {CheckCircle2, ImageIcon, UploadIcon} from "lucide-react";
+
 import {PROGRESS_INCREMENT, REDIRECT_DELAY_MS, PROGRESS_INTERVAL_MS} from "../lib/constants";
 
 const Upload = ({ onComplete }: UploadProps) => {
     const [file, setFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState<boolean>(false);
     const [progress, setProgress] = useState<number>(0);
+
+    // Used to simulate upload + allow cleanup on unmount
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+    // Prevent uploads unless authenticated
     const { isSignedIn } = useOutletContext<AuthContext>();
 
+    // Cleanup timers when component unmounts (important for navigation)
     useEffect(() => {
         return () => {
             if (intervalRef.current) {
@@ -25,6 +30,13 @@ const Upload = ({ onComplete }: UploadProps) => {
         };
     }, []);
 
+
+    /**
+     * Reads file → converts to base64 → simulates progress → notifies parent
+     *
+     * We simulate progress because AI processing happens after navigation.
+     * This creates a smoother UX instead of instant jump to next screen.
+     */
     const processFile = useCallback((file: File) => {
         if (!isSignedIn) return;
 
@@ -32,34 +44,47 @@ const Upload = ({ onComplete }: UploadProps) => {
         setProgress(0);
 
         const reader = new FileReader();
+
+        // Reset state if file read fails
         reader.onerror = () => {
             setFile(null);
             setProgress(0);
         };
+
         reader.onloadend = () => {
             const base64Data = reader.result as string;
 
+            // Fake progress animation until navigation
             intervalRef.current = setInterval(() => {
                 setProgress((prev) => {
                     const next = prev + PROGRESS_INCREMENT;
+
                     if (next >= 100) {
+                        // Stop progress animation
                         if (intervalRef.current) {
                             clearInterval(intervalRef.current);
                             intervalRef.current = null;
                         }
+
+                        // Delay allows UI to show completion state
                         timeoutRef.current = setTimeout(() => {
                             onComplete?.(base64Data);
                             timeoutRef.current = null;
                         }, REDIRECT_DELAY_MS);
+
                         return 100;
                     }
+
                     return next;
                 });
             }, PROGRESS_INTERVAL_MS);
         };
+
+        // Convert image → base64 so it can be processed by AI backend
         reader.readAsDataURL(file);
     }, [isSignedIn, onComplete]);
 
+    // Drag state handlers
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
         if (!isSignedIn) return;
@@ -70,6 +95,7 @@ const Upload = ({ onComplete }: UploadProps) => {
         setIsDragging(false);
     };
 
+    // Handle dropped file
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
@@ -78,11 +104,13 @@ const Upload = ({ onComplete }: UploadProps) => {
 
         const droppedFile = e.dataTransfer.files[0];
         const allowedTypes = ['image/jpeg', 'image/png'];
+
         if (droppedFile && allowedTypes.includes(droppedFile.type)) {
             processFile(droppedFile);
         }
     };
 
+    // Handle manual file selection
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!isSignedIn) return;
 
@@ -113,11 +141,13 @@ const Upload = ({ onComplete }: UploadProps) => {
                         <div className="drop-icon">
                             <UploadIcon size={20} />
                         </div>
+
                         <p>
                             {isSignedIn ? (
                                 "Drag and drop your floor plan here, or click to select a file"
                             ): ("Please sign in or sign up to upload your floor plan")}
                         </p>
+
                         <p className="help">Maximum file size 50 MB.</p>
                     </div>
                 </div>
@@ -137,6 +167,7 @@ const Upload = ({ onComplete }: UploadProps) => {
                         <div className="progress">
                             <div className="bar" style={{ width: `${progress}%` }} />
                         </div>
+
                         <p className="status-text">
                             {progress < 100 ? "Analyzing Floor Plan..." : "Redirecting..."}
                         </p>
@@ -146,4 +177,5 @@ const Upload = ({ onComplete }: UploadProps) => {
         </div>
     )
 }
+
 export default Upload;

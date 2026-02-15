@@ -1,12 +1,16 @@
 import puter from "@heyputer/puter.js";
+
 import { getOrCreateHostingConfig, uploadImageToHosting } from "./puter.hosting";
 import { isHostedUrl } from "./utils";
 import { PUTER_WORKER_URL } from "./constants";
 
+// Opens Puter authentication popup
 export const signIn = async () => await puter.auth.signIn();
 
+// Clears Puter session
 export const signOut = () => puter.auth.signOut();
 
+// Returns logged in user (null if not authenticated)
 export const getCurrentUser = async () => {
     try {
         return await puter.auth.getUser();
@@ -16,7 +20,16 @@ export const getCurrentUser = async () => {
     }
 };
 
+/**
+ * Saves project metadata in Puter KV via worker
+ *
+ * Important:
+ * Images are NOT stored in KV directly (size limits)
+ * → They are uploaded to hosting first
+ * → Then we store only hosted URLs
+ */
 export const createProject = async ({ item, visibility = "private" }: CreateProjectParams): Promise<DesignItem | null | undefined> => {
+
     if (!PUTER_WORKER_URL) {
         console.warn("PUTER_WORKER_URL is not defined. Cannot save the project.");
         return null;
@@ -24,21 +37,48 @@ export const createProject = async ({ item, visibility = "private" }: CreateProj
 
     const projectId = item.id;
 
+    // Ensure user has hosting bucket configured
     const hosting = await getOrCreateHostingConfig();
 
-    const hostedSource = projectId ? await uploadImageToHosting({ hosting, url: item.sourceImage, projectId, label: "source" }) : null;
+    // Upload original floor plan
+    const hostedSource =
+        projectId
+            ? await uploadImageToHosting({
+                hosting,
+                url: item.sourceImage,
+                projectId,
+                label: "source"
+            })
+            : null;
 
-    const hostedRendered = projectId && item.renderedImage ? await uploadImageToHosting({ hosting, url: item.renderedImage, projectId, label: "rendered" }) : null;
+    // Upload AI rendered image (if exists)
+    const hostedRendered =
+        projectId && item.renderedImage
+            ? await uploadImageToHosting({
+                hosting,
+                url: item.renderedImage,
+                projectId,
+                label: "rendered"
+            })
+            : null;
 
-    const resolvedSource = hostedSource?.url || (isHostedUrl(item.sourceImage) ? item.sourceImage : null);
+    // Prefer hosted URL, fallback if already hosted
+    const resolvedSource =
+        hostedSource?.url ||
+        (isHostedUrl(item.sourceImage) ? item.sourceImage : null);
 
     if (!resolvedSource) {
         console.warn("Failed to host source image, skipping save.");
         return null;
     }
 
-    const resolvedRendered = hostedRendered?.url || (item.renderedImage && isHostedUrl(item.renderedImage) ? item.renderedImage : undefined);
+    const resolvedRendered =
+        hostedRendered?.url ||
+        (item.renderedImage && isHostedUrl(item.renderedImage)
+            ? item.renderedImage
+            : undefined);
 
+    // Remove local-only fields before sending to worker
     const {
         sourcePath: _sourcePath,
         renderedPath: _renderedPath,
@@ -53,6 +93,7 @@ export const createProject = async ({ item, visibility = "private" }: CreateProj
     };
 
     try {
+        // Save metadata into KV through worker API
         const response = await puter.workers.exec(`${PUTER_WORKER_URL}/api/projects/save`, {
             method: "POST",
             body: JSON.stringify({ project: payload, visibility }),
@@ -72,14 +113,21 @@ export const createProject = async ({ item, visibility = "private" }: CreateProj
     }
 };
 
+/**
+ * Fetch all user projects from KV storage
+ */
 export const getProjects = async (): Promise<DesignItem[]> => {
+
     if (!PUTER_WORKER_URL) {
         console.warn("PUTER_WORKER_URL is not defined. Cannot fetch projects.");
         return [];
     }
 
     try {
-        const response = await puter.workers.exec(`${PUTER_WORKER_URL}/api/projects/list`, { method: "GET" });
+        const response = await puter.workers.exec(
+            `${PUTER_WORKER_URL}/api/projects/list`,
+            { method: "GET" }
+        );
 
         if (!response.ok) {
             console.error("Failed to fetch projects, status:", await response.text());
@@ -95,7 +143,11 @@ export const getProjects = async (): Promise<DesignItem[]> => {
     };
 };
 
+/**
+ * Fetch single project by ID
+ */
 export const getProjectById = async ({ id }: { id: string }) => {
+
     if (!PUTER_WORKER_URL) {
         console.warn("Missing VITE_PUTER_WORKER_URL; skipping project fetch.");
         return null;

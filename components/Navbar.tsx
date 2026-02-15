@@ -1,10 +1,13 @@
 import { Box } from "lucide-react"
-import Button from "./ui/Button";
 import { useOutletContext } from "react-router";
 
+import Button from "./ui/Button";
+
 const Navbar = () => {
+    // Auth state & actions provided from root Outlet context
     const { isSignedIn, userName, signIn, signOut } = useOutletContext<AuthContext>();
 
+    // Single handler toggles between login & logout
     const handleAuthClick = async () => {
         if (isSignedIn) {
             try {
@@ -12,7 +15,6 @@ const Navbar = () => {
             } catch (error) {
                 console.error(`Puter Sign Out failed: ${error}`);
             }
-
             return;
         }
 
@@ -29,7 +31,6 @@ const Navbar = () => {
                 <div className="left">
                     <div className="brand">
                         <Box className="logo" />
-
                         <span className="name">Planora</span>
                     </div>
 
@@ -41,9 +42,11 @@ const Navbar = () => {
                     </ul>
                 </div>
 
+                {/* Authentication area */}
                 <div className="actions">
                     {isSignedIn ? (
                         <>
+                            {/* Show user identity when signed in */}
                             <span className="greeting">
                                 {userName ? `Hi, ${userName}` : "My Account"}
                             </span>
@@ -54,10 +57,12 @@ const Navbar = () => {
                         </>
                     ) : (
                         <>
+                            {/* Login triggers Puter auth popup */}
                             <Button size="sm" onClick={handleAuthClick} variant="ghost">
                                 Log In
                             </Button>
 
+                            {/* Scrolls to upload section */}
                             <a href="#upload" className="cta">
                                 Get Started
                             </a>

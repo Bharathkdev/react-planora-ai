@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   isRouteErrorResponse,
   Links,
@@ -9,9 +10,9 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
-import { useEffect, useState } from "react";
 import { getCurrentUser, signIn as puterSignIn, signOut as puterSignOut } from "lib/puter.action";
 
+// Preload fonts for better performance & layout stability
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
@@ -25,6 +26,7 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
+// Root HTML shell used by React Router
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
@@ -36,6 +38,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        {/* Restores scroll position between navigations */}
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -43,6 +46,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Default unauthenticated state
 const DEFAULT_AUTH_STATE: AuthState = {
   isSignedIn: false,
   userName: null,
@@ -52,6 +56,15 @@ const DEFAULT_AUTH_STATE: AuthState = {
 export default function App() {
   const [authState, setAuthState] = useState<AuthState>(DEFAULT_AUTH_STATE);
 
+  /**
+   * Sync auth state with Puter session
+   * Used:
+   * - on app load
+   * - after login
+   * - after logout
+   *
+   * Centralized so UI stays consistent across pages
+   */
   const refreshAuth = async (): Promise<boolean> => {
     try {
       const user = await getCurrentUser();
@@ -70,15 +83,18 @@ export default function App() {
     }
   };
 
+  // Initialize auth state on first app mount
   useEffect(() => {
     refreshAuth();
   }, []);
 
+  // Wrapper to ensure UI updates after Puter login
   const signIn = async (): Promise<boolean> => {
     await puterSignIn();
     return await refreshAuth();
   };
 
+  // Wrapper to ensure UI updates after logout
   const signOut = async (): Promise<boolean> => {
     puterSignOut();
     return await refreshAuth();
@@ -86,6 +102,7 @@ export default function App() {
 
   return (
     <main className="min-h-screen bg-background text-foreground relative z-10">
+      {/* Provide auth context to all routes */}
       <Outlet 
         context = {{ ...authState, refreshAuth, signIn, signOut }}
       />
@@ -93,6 +110,13 @@ export default function App() {
   )
 }
 
+/**
+ * Global route error boundary
+ * Handles:
+ * - 404 pages
+ * - runtime errors
+ * - dev stack traces
+ */
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   let message = "Oops!";
   let details = "An unexpected error occurred.";
@@ -105,6 +129,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
         ? "The requested page could not be found."
         : error.statusText || details;
   } else if (import.meta.env.DEV && error && error instanceof Error) {
+    // Show stack only in development
     details = error.message;
     stack = error.stack;
   }

@@ -1,10 +1,11 @@
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router";
+import { ArrowRight, ArrowUpRight, Clock, Layers, RefreshCcw } from "lucide-react";
+
 import Navbar from "components/Navbar";
 import type { Route } from "./+types/home";
-import { ArrowRight, ArrowUpRight, Clock, Layers, RefreshCcw } from "lucide-react";
 import Button from "components/ui/Button";
 import Upload from "components/Upload";
-import { useNavigate } from "react-router";
-import { useEffect, useRef, useState } from "react";
 import { createProject, getProjects } from "lib/puter.action";
 
 export function meta({ }: Route.MetaArgs) {
@@ -20,13 +21,19 @@ export function meta({ }: Route.MetaArgs) {
 
 export default function Home() {
   const navigate = useNavigate();
+
+  // Stores all user projects
   const [projects, setProjects] = useState<DesignItem[]>([]);
+
+  // Prevents duplicate project creation during upload
   const isCreatingProjectRef = useRef<boolean>(false);
 
+  // Handles image upload and creates a new project
   const handleUploadComplete = async (base64Data: string) => {
     try {
       if (isCreatingProjectRef.current) return false;
       isCreatingProjectRef.current = true;
+
       const newId = Date.now().toString();
       const name = `Project ${newId}`;
 
@@ -45,8 +52,10 @@ export default function Home() {
         return false;
       }
 
+      // Add new project to top of list
       setProjects((prev) => [savedProject, ...prev]);
 
+      // Navigate to visualizer with initial state
       navigate(`/visualizer/${newId}`, {
         state: {
           initialImage: savedProject.sourceImage,
@@ -61,10 +70,10 @@ export default function Home() {
     }
   };
 
+  // Fetch projects on first load
   useEffect(() => {
     const fetchProjects = async () => {
       const items = await getProjects();
-      // Show latest project first
       setProjects(items.slice().reverse());
     };
 
@@ -74,6 +83,8 @@ export default function Home() {
   return (
     <div className="home">
       <Navbar />
+
+      {/* Hero Section */}
       <section className="hero">
         <div className="announce">
           <div className="dot">
@@ -102,6 +113,7 @@ export default function Home() {
           </Button>
         </div>
 
+        {/* Upload card */}
         <div id="upload" className="upload-shell">
           <div className="grid-overlay" />
 
@@ -120,6 +132,7 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Projects Section */}
       <section className="projects">
         <div className="section-inner">
           <div className="section-head">
@@ -130,6 +143,8 @@ export default function Home() {
           </div>
 
           <div className="projects-grid-wrapper relative">
+
+            {/* Empty / Loading state */}
             {projects === undefined || projects === null || projects.length === 0 ? (
               <div className="w-full min-h-65 border border-gray-300 rounded-xl bg-white flex items-center justify-center">
                 <div className="text-center px-6">
@@ -147,6 +162,7 @@ export default function Home() {
               </div>
             ) : null}
 
+            {/* Projects grid */}
             <div className="projects-grid">
               {projects.map(({ id, name, sourceImage, renderedImage, timestamp }) => (
                 <div className="project-card group" key={id} onClick={() => navigate(`/visualizer/${id}`)}>
@@ -156,17 +172,17 @@ export default function Home() {
                       <span>Community</span>
                     </div>
                   </div>
+
                   <div className="card-body">
                     <div>
                       <h3>{name}</h3>
                       <div className="meta">
                         <Clock size={12} />
-                        <span>
-                          {new Date(timestamp).toLocaleDateString()}
-                        </span>
+                        <span>{new Date(timestamp).toLocaleDateString()}</span>
                         <span>By Bharath</span>
                       </div>
                     </div>
+
                     <div className="arrow">
                       <ArrowUpRight size={18} />
                     </div>
@@ -174,6 +190,7 @@ export default function Home() {
                 </div>
               ))}
             </div>
+
           </div>
         </div>
       </section>
