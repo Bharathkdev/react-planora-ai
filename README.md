@@ -113,6 +113,14 @@ Make sure you have the following installed on your machine:
 - [Node.js](https://nodejs.org/en)
 - [npm](https://www.npmjs.com/) (Node Package Manager)
 
+**Environment Variables**
+
+Planora AI requires a configuration for the AI worker endpoint. Create a `.env.local` file in the project root (if not already present) and add the following:
+
+```env
+VITE_PUTER_WORKER_URL=https://your-worker-url.puter.work
+```
+
 **Cloning the Repository**
 
 ```bash
