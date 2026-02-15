@@ -20,16 +20,28 @@ const visualizerId = () => {
 
   const handleBack = () => navigate("/");
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!currentImage) return;
 
-    const link = document.createElement('a');
-    link.href = currentImage;
-    link.download = `planora-${id || 'design'}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
+    try {
+      const response = await fetch(currentImage, { mode: "cors" });
+      const blob = await response.blob();
+
+      const blobUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `planora-${id || "design"}.png`;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error("Download failed:", err);
+    }
+  };
 
   const runGeneration = async (item: DesignItem) => {
     if (!id || !item.sourceImage) return;
@@ -143,14 +155,6 @@ const visualizerId = () => {
               >
                 <Download className="w-4 h-4 mr-2" />
                 Export
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => { }}
-                className="share"
-              >
-                <Share2 className="w-4 h-4 mr-2" />
-                Share
               </Button>
             </div>
           </div>

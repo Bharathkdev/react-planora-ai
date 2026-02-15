@@ -510,6 +510,10 @@
                     @apply flex items-center justify-center text-sm text-zinc-500;
                 }
 
+                .projects-grid-wrapper {
+                    min-height: 280px;
+                }
+
                 .projects-grid {
                     @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8;
 

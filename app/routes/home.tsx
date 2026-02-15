@@ -1,6 +1,6 @@
 import Navbar from "components/Navbar";
 import type { Route } from "./+types/home";
-import { ArrowRight, ArrowUpRight, Clock, Layers } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Clock, Layers, RefreshCcw } from "lucide-react";
 import Button from "components/ui/Button";
 import Upload from "components/Upload";
 import { useNavigate } from "react-router";
@@ -9,8 +9,12 @@ import { createProject, getProjects } from "lib/puter.action";
 
 export function meta({ }: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "Planora AI — 2D to 3D Architectural Visualization" },
+    {
+      name: "description",
+      content:
+        "Transform floor plans into photorealistic 3D renders instantly with Planora AI. Design, visualize, and export architectural spaces faster than ever.",
+    },
   ];
 }
 
@@ -60,8 +64,8 @@ export default function Home() {
   useEffect(() => {
     const fetchProjects = async () => {
       const items = await getProjects();
-
-      setProjects(items);
+      // Show latest project first
+      setProjects(items.slice().reverse());
     };
 
     fetchProjects();
@@ -125,36 +129,51 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="projects-grid">
-            {projects.map(({ id, name, sourceImage, renderedImage, timestamp }) => (
-              <div className="project-card group" key={id} onClick={() => navigate(`/visualizer/${id}`)}>
-                <div className="preview">
-                  <img src={renderedImage || sourceImage} alt={name?.toString()} />
-
-                  <div className="badge">
-                    <span>Community</span>
-                  </div>
-                </div>
-
-                <div className="card-body">
-                  <div>
-                    <h3>{name}</h3>
-
-                    <div className="meta">
-                      <Clock size={12} />
-                      <span>
-                        {new Date(timestamp).toLocaleDateString()}
-                      </span>
-                      <span>By Bharath</span>
+          <div className="projects-grid-wrapper relative">
+            {projects === undefined || projects === null || projects.length === 0 ? (
+              <div className="w-full min-h-65 border border-gray-300 rounded-xl bg-white flex items-center justify-center">
+                <div className="text-center px-6">
+                  {projects.length === 0 ? (
+                    <div className="flex items-center justify-center gap-2 text-black font-semibold">
+                      <RefreshCcw className="w-4 h-4 animate-spin" />
+                      Loading Projects...
                     </div>
-                  </div>
-
-                  <div className="arrow">
-                    <ArrowUpRight size={18} />
-                  </div>
+                  ) : (
+                    <span className="text-gray-500 font-medium">
+                      Your workspace is empty. Create your first project to begin.
+                    </span>
+                  )}
                 </div>
               </div>
-            ))}
+            ) : null}
+
+            <div className="projects-grid">
+              {projects.map(({ id, name, sourceImage, renderedImage, timestamp }) => (
+                <div className="project-card group" key={id} onClick={() => navigate(`/visualizer/${id}`)}>
+                  <div className="preview">
+                    <img src={renderedImage || sourceImage} alt={name?.toString()} />
+                    <div className="badge">
+                      <span>Community</span>
+                    </div>
+                  </div>
+                  <div className="card-body">
+                    <div>
+                      <h3>{name}</h3>
+                      <div className="meta">
+                        <Clock size={12} />
+                        <span>
+                          {new Date(timestamp).toLocaleDateString()}
+                        </span>
+                        <span>By Bharath</span>
+                      </div>
+                    </div>
+                    <div className="arrow">
+                      <ArrowUpRight size={18} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

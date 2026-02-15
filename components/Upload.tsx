@@ -134,13 +134,12 @@ const Upload = ({ onComplete }: UploadProps) => {
 
                         <h3>{file.name}</h3>
 
-                        <div className='progress'>
+                        <div className="progress">
                             <div className="bar" style={{ width: `${progress}%` }} />
-
-                            <p className="status-text">
-                                {progress === 100 ? "Redirecting ..." : `Analyzing Floor Plan ... ${progress}%`}
-                            </p>
                         </div>
+                        <p className="status-text">
+                            {progress < 100 ? "Analyzing Floor Plan..." : "Redirecting..."}
+                        </p>
                     </div>
                 </div>
             )}
