@@ -12,6 +12,7 @@ const Navbar = () => {
         if (isSignedIn) {
             try {
                 await signOut();
+                window.location.reload(); // Reload after logout
             } catch (error) {
                 console.error(`Puter Sign Out failed: ${error}`);
             }
@@ -20,6 +21,7 @@ const Navbar = () => {
 
         try {
             await signIn();
+            window.location.reload(); // Reload after login/signup
         } catch (error) {
             console.error(`Puter Sign In failed: ${error}`);
         }

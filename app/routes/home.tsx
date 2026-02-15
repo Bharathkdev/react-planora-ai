@@ -24,6 +24,7 @@ export default function Home() {
 
   // Stores all user projects
   const [projects, setProjects] = useState<DesignItem[]>([]);
+  const [isProjectsLoading, setIsProjectsLoading] = useState<boolean>(false);
 
   // Prevents duplicate project creation during upload
   const isCreatingProjectRef = useRef<boolean>(false);
@@ -77,7 +78,12 @@ export default function Home() {
       setProjects(items.slice().reverse());
     };
 
-    fetchProjects();
+    try {
+      setIsProjectsLoading(true);
+      fetchProjects();
+    } finally {
+      setIsProjectsLoading(false);
+    }
   }, []);
 
   return (
@@ -145,10 +151,10 @@ export default function Home() {
           <div className="projects-grid-wrapper relative">
 
             {/* Empty / Loading state */}
-            {projects === undefined || projects === null || projects.length === 0 ? (
+            {isProjectsLoading || projects.length === 0 ? (
               <div className="w-full min-h-65 border border-gray-300 rounded-xl bg-white flex items-center justify-center">
                 <div className="text-center px-6">
-                  {projects.length === 0 ? (
+                  {isProjectsLoading ? (
                     <div className="flex items-center justify-center gap-2 text-black font-semibold">
                       <RefreshCcw className="w-4 h-4 animate-spin" />
                       Loading Projects...
@@ -179,7 +185,7 @@ export default function Home() {
                       <div className="meta">
                         <Clock size={12} />
                         <span>{new Date(timestamp).toLocaleDateString()}</span>
-                        <span>By Bharath</span>
+                        <span>By You</span>
                       </div>
                     </div>
 
