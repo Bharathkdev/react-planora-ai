@@ -49,7 +49,7 @@ Instead of static design tools, Planora acts as a **visual thinking engine for a
 
 ### AI & Backend
 - **Puter.js**: Handing Auth, KV storage, Hosting, and Workers.
-- **Gemini Image Model**: Core Image-to-Image rendering engine.
+- **Gemini Image Model**: Core Image-to-Image rendering engine (other AI models can also be used).
 - **Serverless Edge Workers**: Low-latency backend processing.
 - **KV Storage Database**: For high-speed metadata retrieval.
 - **CDN Hosting**: Global delivery of generated assets.
@@ -83,11 +83,13 @@ Instead of static design tools, Planora acts as a **visual thinking engine for a
 👉 **Upload Experience Simulation** Smooth progress animation while AI processing happens.
 
 👉 **Optimized Rendering Flow**
+
     - Base64 normalization
     - MIME detection
     - Cross-origin safe canvas rendering
     
 👉 **Scalable Storage Design**
+
     - KV stores metadata only
     - CDN stores heavy assets
     - Worker API acts as database layer
