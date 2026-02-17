@@ -65,22 +65,33 @@ Instead of static design tools, Planora acts as a **visual thinking engine for a
 ## <a name="features">🔋 Features</a>
 
 👉 **2D → 3D AI Rendering** Upload a floor plan and generate a furnished, photorealistic interior automatically.
+
 👉 **AI Image-to-Image Pipeline** Processes spatial layouts using a multimodal generative model.
+
 👉 **Persistent Project Storage** Projects saved in KV database while images are stored in CDN hosting.
+
 👉 **Instant Image Download** Download rendered images directly without opening a new tab.
+
 👉 **Before / After Comparison** Interactive slider to compare blueprint vs generated interior.
+
 👉 **Serverless Architecture** No traditional backend — powered entirely by edge workers.
+
 👉 **Authentication System** Secure login using Puter Auth with per-user storage.
+
 👉 **Smart Asset Hosting** AI outputs normalized and uploaded permanently for reuse & sharing.
+
 👉 **Upload Experience Simulation** Smooth progress animation while AI processing happens.
+
 👉 **Optimized Rendering Flow**
     - Base64 normalization
     - MIME detection
     - Cross-origin safe canvas rendering
+    
 👉 **Scalable Storage Design**
     - KV stores metadata only
     - CDN stores heavy assets
     - Worker API acts as database layer
+    
 👉 **Clean Modular Architecture**
     Separation of UI, AI processing, storage, hosting, and worker backend.
 
