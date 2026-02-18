@@ -66,6 +66,8 @@ Instead of static design tools, Planora acts as a **visual thinking engine for a
 
 👉 **2D → 3D AI Rendering** Upload a floor plan and generate a furnished, photorealistic interior automatically.
 
+👉 **Watch Demo Mode 🎬** Built-in interactive demo video explaining the workflow without leaving the page — improves onboarding and first-time user understanding.
+
 👉 **AI Image-to-Image Pipeline** Processes spatial layouts using a multimodal generative model.
 
 👉 **Persistent Project Storage** Projects saved in KV database while images are stored in CDN hosting.
