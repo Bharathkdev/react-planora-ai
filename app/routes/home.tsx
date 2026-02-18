@@ -27,8 +27,12 @@ export default function Home() {
   const [projects, setProjects] = useState<DesignItem[]>([]);
   const [isProjectsLoading, setIsProjectsLoading] = useState<boolean>(false);
 
+  // Video demo toggle state
+  const [showDemo, setShowDemo] = useState(false);
+
   // Prevents duplicate project creation during upload
   const isCreatingProjectRef = useRef<boolean>(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Handles image upload and creates a new project
   const handleUploadComplete = async (base64Data: string) => {
@@ -96,6 +100,11 @@ export default function Home() {
     fetchProjects();
   }, [isSignedIn]);
 
+  useEffect(() => {
+    if (!showDemo && videoRef.current) {
+      videoRef.current.pause();
+    }
+  }, [showDemo]);
 
   return (
     <div className="home">
@@ -107,7 +116,6 @@ export default function Home() {
           <div className="dot">
             <div className="pulse"></div>
           </div>
-
           <p>Introducing Planora AI 2.0</p>
         </div>
 
@@ -125,10 +133,34 @@ export default function Home() {
             <ArrowRight className="icon" />
           </a>
 
-          <Button variant="outline" size="lg" className="demo">
-            Watch Demo
+          <Button
+            variant="outline"
+            size="lg"
+            className="demo"
+            onClick={() => setShowDemo((prev) => !prev)}
+          >
+            {showDemo ? "Close Demo" : "Watch Demo"}
           </Button>
         </div>
+
+        {/* Video Demo Section */}
+        {showDemo && (
+          <div className={`demo-video ${showDemo ? "open" : ""}`}>
+            <div className="demo-video-inner">
+              <video
+                ref={videoRef}
+                src="/demo/planora-demo.mp4"
+                controls
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                poster="/demo/thumbnail.png"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Upload card */}
         <div id="upload" className="upload-shell">

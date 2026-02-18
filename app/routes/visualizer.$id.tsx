@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router";
-import { Box, Download, RefreshCcw, Share2, X } from "lucide-react";
+import { Box, Download, RefreshCcw, X } from "lucide-react";
 import { ReactCompareSlider, ReactCompareSliderImage } from "react-compare-slider";
 
 import Button from "components/ui/Button";
